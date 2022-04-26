@@ -56,9 +56,9 @@ def make_plot(N):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=np.arange(N), y=np.random.rand(N),
                     mode='lines',
-                    name='Random '))
+                    name='Random Data'))
                     
-    fig.update_layout(title="Model Ouasdastput")
+    fig.update_layout(title="Model Output")
     
     return fig    
     
