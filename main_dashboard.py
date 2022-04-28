@@ -79,6 +79,7 @@ app.layout = html.Div([
         html.Div(children=[
             html.H2(children='Summary Statistics', style={'textAlign': 'center','font-style': 'italic'}),
             html.Div(id='district_count', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
+            html.Div(id='enrollment_sum', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
             html.Div(id='spending_avg', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
             html.Div(id='poverty_rate', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
             html.Div(id='median_income', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
@@ -167,6 +168,7 @@ app.layout = html.Div([
     Output('poverty_rate', 'children'),
     Output('median_income', 'children'),
     Output('median_property_value', 'children'),
+    Output('enrollment_sum','children'),
     Input('radioItem', 'value'),
     Input('Enrollment', 'value')
 )    
@@ -199,6 +201,7 @@ def make_country_heat_map(button, enrollment):
     poverty_rate = str(round(df["Student poverty rate"].mean()))
     median_income = str(round(df["Median household income"].mean()))
     median_property_value = str(round(df["Median property value"].mean()))
+    enrollment_sum = str(df["Enrollment"].sum())
 
     # Creating plot
     fig = px.choropleth(df, geojson=counties, locations='CNTY', color='State and local revenue, per pupil, cost adjusted',
@@ -210,7 +213,7 @@ def make_country_heat_map(button, enrollment):
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     fig.update_layout(title = "Spending Per Student In US Public School Districts")
     
-    return fig, "Districts: " + district_count, "Average Spending Per Student: $" + spending_avg, "Poverty Rate: " + poverty_rate + "%", "Median Income: $" + median_income, "Median Property Value: $" + median_property_value
+    return fig, "Districts: " + district_count, "Average Spending Per Student: $" + spending_avg, "Poverty Rate: " + poverty_rate + "%", "Median Income: $" + median_income, "Median Property Value: $" + median_property_value, "Enrollment: " + enrollment_sum
     
 # Function takes in input from drop down menu
 # Outputs state heat map

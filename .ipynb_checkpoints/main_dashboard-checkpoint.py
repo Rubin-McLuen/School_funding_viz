@@ -25,12 +25,15 @@ app.config.suppress_callback_exceptions = True
 #################################################
 app.layout = html.Div([
 
-    
+    # Title and subtitle
     html.H1(children='Public School District Data Visualization', style={'textAlign': 'center'}),
     html.H6(children='Adolfo Calderon and Rubin McLuen', style={'textAlign': 'center'}),
     
+    # Top Section
     html.Div(children=[
         html.Div(children=[
+            
+            # Radio Buttons
             html.Br(),
             html.Br(),
             html.Br(),
@@ -45,6 +48,8 @@ app.layout = html.Div([
                        {'label': 'Predominantly Nonwhite', 'value': 'Predominantly Nonwhite'},
                    ],
                    value='All'),
+            
+            #Slider
             html.H6('Enrollment',style={'textAlign': 'center'}),
             dcc.Slider(0, 10000,
                        marks=None,
@@ -52,29 +57,43 @@ app.layout = html.Div([
                        id='Enrollment',
                        tooltip={"placement": "bottom", "always_visible": True},
                 )],style={'display': 'inline-block'}), 
+        
+        # Country heat map
         html.Div(children=[
             html.H6("Average Spending Per Public School Student In US Counties",style={'textAlign': 'center'}),
             dcc.Graph(id="country_map")], style={'display': 'inline-block'}),
         html.Br()],
              
+        # Splitting top section into columns
         style={"display": "grid", "grid-template-columns": "14% 75% 14%"}
 ),
     html.Br(),
     html.Br(),
     html.Br(),
     html.Br(),
+    
+    #Bottom Section
     html.Div(children=[
+        
+        # Summary Statistics
         html.Div(children=[
             html.H2(children='Summary Statistics', style={'textAlign': 'center','font-style': 'italic'}),
             html.Div(id='district_count', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
+            html.Div(id='enrollment_sum', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
             html.Div(id='spending_avg', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
             html.Div(id='poverty_rate', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
             html.Div(id='median_income', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
             html.Div(id='median_property_value', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
         ]),
+        
+        # State Data
         html.Div(children=[
             html.Div(children=[
+                
+                # Title
                 html.H2(children='State Data', style={'textAlign': 'center','font-style': 'italic'}),
+                
+                # Dropdown menu
                 dcc.Dropdown(id='state',options=[
                     {'label': 'Alabama', 'value':'AL'},
                     {'label': 'Alaska', 'value':'AK'},
@@ -129,6 +148,8 @@ app.layout = html.Div([
                     ],
                     placeholder="Select a State",
                     value="IA"),
+                
+            # State heat map
             dcc.Graph(id="state_map")])
     ]
     
@@ -137,7 +158,9 @@ app.layout = html.Div([
 #####################
 #  Make Basic Plot  #
 #####################
-    
+  
+# Function takes input from radio buttons and enrollment slider
+# Outputs country-wide summary statistics from that slice
 @app.callback(
     Output('country_map', 'figure'),
     Output('district_count', 'children'),
@@ -145,6 +168,7 @@ app.layout = html.Div([
     Output('poverty_rate', 'children'),
     Output('median_income', 'children'),
     Output('median_property_value', 'children'),
+    Output('enrollment_sum','children'),
     Input('radioItem', 'value'),
     Input('Enrollment', 'value')
 )    
@@ -154,25 +178,32 @@ def make_country_heat_map(button, enrollment):
     import pandas as pd
     import plotly.express as px
     
+    # County FIPS data
     with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
         counties = json.load(response)
 
+    # Our data
     df = pd.read_csv("School_funding_viz/data/county_data.csv",dtype={"CNTY": str})
     
+    # Enrollment filter
     df = df[df['Enrollment'] > enrollment]
     
+    # Radio Button filters
     if button == "Predominantly White":
         df = df[df["Percent White"] >= 80]
         
     elif button == "Predominantly Nonwhite":
         df = df[df["Percent White"] <= 20]
         
+    # Calculating summary statistics
     district_count = str(df[df.columns[0]].count())
     spending_avg = str(round(df["State and local revenue, per pupil, cost adjusted"].mean()))
     poverty_rate = str(round(df["Student poverty rate"].mean()))
     median_income = str(round(df["Median household income"].mean()))
     median_property_value = str(round(df["Median property value"].mean()))
+    enrollment_sum = str(df["Enrollment"].sum())
 
+    # Creating plot
     fig = px.choropleth(df, geojson=counties, locations='CNTY', color='State and local revenue, per pupil, cost adjusted',
                                color_continuous_scale="Viridis",
                                range_color=(0, 30000),
@@ -182,9 +213,10 @@ def make_country_heat_map(button, enrollment):
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     fig.update_layout(title = "Spending Per Student In US Public School Districts")
     
-    return fig, "Districts: " + district_count, "Average Spending Per Student: $" + spending_avg, "Poverty Rate: " + poverty_rate + "%", "Median Income: $" + median_income, "Median Property Value: $" + median_property_value
+    return fig, "Districts: " + district_count, "Average Spending Per Student: $" + spending_avg, "Poverty Rate: " + poverty_rate + "%", "Median Income: $" + median_income, "Median Property Value: $" + median_property_value, "Enrollment: " + enrollment_sum
     
-    
+# Function takes in input from drop down menu
+# Outputs state heat map
 @app.callback(
     Output('state_map', 'figure'),
     Input('state', 'value'),
@@ -195,14 +227,18 @@ def make_state_heat_map(state):
     import pandas as pd
     import plotly.express as px
     
+    # County Data
     with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
         counties = json.load(response)
 
+    # Our Data
     df = pd.read_csv("School_funding_viz/data/county_data.csv",
                        dtype={"CNTY": str})
     
+    # Look only at specific state data from input
     df = df[df['STATE'] == state]
 
+    # Make plot
     fig = px.choropleth(df, geojson=counties, locations='CNTY', color='State and local revenue, per pupil, cost adjusted',
                                color_continuous_scale="Viridis",
                                scope='usa',
