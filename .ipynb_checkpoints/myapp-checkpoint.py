@@ -66,21 +66,73 @@ app.layout = html.Div([
     html.Div(children=[
         html.Div(children=[
             html.H2(children='Summary Statistics', style={'textAlign': 'center','font-style': 'italic'}),
-            html.Div(children='district_count'),
-            html.Div(children='spending_avg'),
-            html.Div(children='poverty_rate'),
-            html.Div(children='median_income'),
-            html.Div(children='median_property_value'),
+            html.Div(id='district_count', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
+            html.Div(id='spending_avg', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
+            html.Div(id='poverty_rate', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
+            html.Div(id='median_income', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
+            html.Div(id='median_property_value', style={'textAlign': 'center','font-style': 'italic', 'font-size': '25px'}),
         ]),
         html.Div(children=[
-            html.H2(children='State Data', style={'textAlign': 'center','font-style': 'italic'}),
-            dcc.Input(id='state', value="IA", type='number', debounce=True),
+            html.Div(children=[
+                html.H2(children='State Data', style={'textAlign': 'center','font-style': 'italic'}),
+                dcc.Dropdown(id='state',options=[
+                    {'label': 'Alabama', 'value':'AL'},
+                    {'label': 'Alaska', 'value':'AK'},
+                    {'label': 'Arizona', 'value':'AZ'},
+                    {'label': 'Arkansas', 'value':'AR'},
+                    {'label': 'California', 'value':'CA'},
+                    {'label': 'Colorado', 'value':'CO'},
+                    {'label': 'Connecticut', 'value':'CT'},
+                    {'label': 'Delaware', 'value':'DE'},
+                    {'label': 'Florida', 'value':'FL'},
+                    {'label': 'Georgia', 'value':'GA'},
+                    {'label': 'Hawaii', 'value':'HI'},
+                    {'label': 'Idaho', 'value':'ID'},
+                    {'label': 'Illinois', 'value':'IL'},
+                    {'label': 'Indiana', 'value':'IN'},
+                    {'label': 'Iowa', 'value':'IA'},
+                    {'label': 'Kansas', 'value':'KS'},
+                    {'label': 'Kentucky', 'value':'KY'},
+                    {'label': 'Louisiana', 'value':'LA'},
+                    {'label': 'Maine', 'value':'ME'},
+                    {'label': 'Maryland', 'value':'MD'},
+                    {'label': 'Massachusetts', 'value':'MA'},
+                    {'label': 'Michigan', 'value':'MI'},
+                    {'label': 'Minnesota', 'value':'MN'},
+                    {'label': 'Mississippi', 'value':'MS'},
+                    {'label': 'Missouri', 'value':'MO'},
+                    {'label': 'Montana', 'value':'MT'},
+                    {'label': 'Nebraska', 'value':'NE'},
+                    {'label': 'Nevada', 'value':'NV'},
+                    {'label': 'New Hampshire', 'value':'NH'},
+                    {'label': 'New Jersey', 'value':'NJ'},
+                    {'label': 'New Mexico', 'value':'NM'},
+                    {'label': 'New York', 'value':'NY'},
+                    {'label': 'North Carolina', 'value':'NC'},
+                    {'label': 'North Dakota', 'value':'ND'},
+                    {'label': 'Ohio', 'value':'OH'},
+                    {'label': 'Oklahoma', 'value':'OK'},
+                    {'label': 'Oregon', 'value':'OR'},
+                    {'label': 'Pennsylvania', 'value':'PA'},
+                    {'label': 'Rhode Island', 'value':'RI'},
+                    {'label': 'South Carolina', 'value':'SC'},
+                    {'label': 'South Dakota', 'value':'SD'},
+                    {'label': 'Tennessee', 'value':'TN'},
+                    {'label': 'Texas', 'value':'TX'},
+                    {'label': 'Utah', 'value':'UT'},
+                    {'label': 'Vermont', 'value':'VT'},
+                    {'label': 'Virginia', 'value':'VA'},
+                    {'label': 'Washington', 'value':'VI'},
+                    {'label': 'West Virginia', 'value':'WA'},
+                    {'label': 'Wisconsin', 'value':'WI'},
+                    {'label': 'Wyoming', 'value':'WY'},
+                    ],
+                    placeholder="Select a State",
+                    value="IA"),
             dcc.Graph(id="state_map")])
-    ],
-             
-        style={"display": "grid", "grid-template-columns": " 50% 50%"})
+    ]
     
-])
+)], style={"display": "grid", "grid-template-columns": "49% 49%"})])
 
 #####################
 #  Make Basic Plot  #
@@ -93,8 +145,8 @@ app.layout = html.Div([
     Output('poverty_rate', 'children'),
     Output('median_income', 'children'),
     Output('median_property_value', 'children'),
-    Input('radioItem', 'children'),
-    Input('Enrollment', 'children')
+    Input('radioItem', 'value'),
+    Input('Enrollment', 'value')
 )    
 def make_country_heat_map(button, enrollment):
     from urllib.request import urlopen
@@ -115,7 +167,7 @@ def make_country_heat_map(button, enrollment):
     elif button == "Predominantly Nonwhite":
         df = df[df["Percent White"] <= 20]
         
-    district_count = df[df.columns[0]].count()
+    district_count = str(df[df.columns[0]].count())
     spending_avg = str(round(df["State and local revenue, per pupil, cost adjusted"].mean()))
     poverty_rate = str(round(df["Student poverty rate"].mean()))
     median_income = str(round(df["Median household income"].mean()))
@@ -130,7 +182,7 @@ def make_country_heat_map(button, enrollment):
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     fig.update_layout(title = "Spending Per Student In US Public School Districts")
     
-    return fig, district_count, spending_avg, poverty_rate, median_income, median_property_value
+    return fig, "Districts: " + district_count, "Average Spending Per Student: $" + spending_avg, "Poverty Rate: " + poverty_rate + "%", "Median Income: $" + median_income, "Median Property Value: $" + median_property_value
     
     
 @app.callback(
@@ -150,22 +202,11 @@ def make_state_heat_map(state):
                        dtype={"CNTY": str})
     
     df = df[df['STATE'] == state]
-    district_count = df[df.columns[0]].count()
-    spending_avg = round(df["State and local revenue, per pupil, cost adjusted"].mean())
-    poverty_rate = round(df["Student poverty rate"].mean())
-    median_income = round(df["Median household income"].mean())
-    median_property_value = round(df["Median property value"].mean())
-    
-    print(district_count)
-    print(spending_avg)
-    print(poverty_rate)
-    print(median_income)
-    print(median_property_value)
-    
+
     fig = px.choropleth(df, geojson=counties, locations='CNTY', color='State and local revenue, per pupil, cost adjusted',
                                color_continuous_scale="Viridis",
                                scope='usa',
-                               labels={'State and local revenue, per pupil, cost adjusted':'Dollars $'}
+                               labels={'State and local revenue, per pupil, cost adjusted':'Dollars ($)'}
                               )
     fig.update_geos(fitbounds="locations", visible=False)
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
