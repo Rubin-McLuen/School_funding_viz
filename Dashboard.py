@@ -72,6 +72,11 @@ app.layout = html.Div([
 #####################
 @app.callback(
     Output('country_heat_map', 'figure'),
+    Output('district_count', 'value'),
+    Output('spending_avg', 'value'),
+    Output('poverty_rate', 'value'),
+    Output('median_income', 'value'),
+    Output('median_property_value', 'value'),
     Input('Button', 'value'))
 def make_country_heat_map(button):
     with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
@@ -107,7 +112,7 @@ def make_country_heat_map(button):
                                labels={'State and local revenue, per pupil, cost adjusted':'Dollars $'}
                               )
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-    return fig
+    return fig, district_count, spending_avg, poverty_rate, median_income, median_property_value
 
 @app.callback(
     Output('new_figure', 'figure'),

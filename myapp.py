@@ -59,8 +59,19 @@ app.layout = html.Div([
              
         style={"display": "grid", "grid-template-columns": "14% 75% 14%"}
 ),
+    html.Br(),
+    html.Br(),
+    html.Br(),
+    html.Br(),
     html.Div(children=[
-        html.H2(children='Summary Statistics', style={'textAlign': 'center','font-style': 'italic'}),
+        html.Div(children=[
+            html.H2(children='Summary Statistics', style={'textAlign': 'center','font-style': 'italic'}),
+            html.Div(children='district_count'),
+            html.Div(children='spending_avg'),
+            html.Div(children='poverty_rate'),
+            html.Div(children='median_income'),
+            html.Div(children='median_property_value'),
+        ]),
         html.Div(children=[
             html.H2(children='State Data', style={'textAlign': 'center','font-style': 'italic'}),
             dcc.Input(id='state', value="IA", type='number', debounce=True),
@@ -77,8 +88,13 @@ app.layout = html.Div([
     
 @app.callback(
     Output('country_map', 'figure'),
-    Input('radioItem', 'value'),
-    Input('Enrollment', 'value')
+    Output('district_count', 'children'),
+    Output('spending_avg', 'children'),
+    Output('poverty_rate', 'children'),
+    Output('median_income', 'children'),
+    Output('median_property_value', 'children'),
+    Input('radioItem', 'children'),
+    Input('Enrollment', 'children')
 )    
 def make_country_heat_map(button, enrollment):
     from urllib.request import urlopen
@@ -100,16 +116,10 @@ def make_country_heat_map(button, enrollment):
         df = df[df["Percent White"] <= 20]
         
     district_count = df[df.columns[0]].count()
-    spending_avg = round(df["State and local revenue, per pupil, cost adjusted"].mean())
-    poverty_rate = round(df["Student poverty rate"].mean())
-    median_income = round(df["Median household income"].mean())
-    median_property_value = round(df["Median property value"].mean())
-    
-    print(district_count, "/12797")
-    print(spending_avg)
-    print(poverty_rate)
-    print(median_income)
-    print(median_property_value)
+    spending_avg = str(round(df["State and local revenue, per pupil, cost adjusted"].mean()))
+    poverty_rate = str(round(df["Student poverty rate"].mean()))
+    median_income = str(round(df["Median household income"].mean()))
+    median_property_value = str(round(df["Median property value"].mean()))
 
     fig = px.choropleth(df, geojson=counties, locations='CNTY', color='State and local revenue, per pupil, cost adjusted',
                                color_continuous_scale="Viridis",
@@ -120,7 +130,7 @@ def make_country_heat_map(button, enrollment):
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     fig.update_layout(title = "Spending Per Student In US Public School Districts")
     
-    return fig
+    return fig, district_count, spending_avg, poverty_rate, median_income, median_property_value
     
     
 @app.callback(
